@@ -1,52 +1,71 @@
-package de.sousalj.main;
+package dev.sousalj.main;
 
-
+import java.util.InputMismatchException;
+import java.util.Locale;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 public class ContaTerminal {
     private Integer numero;
     private String agencia;
     private String nomeCliente;
-    private Float saldo;
+    private Double saldo;
 
     public static void main(String[] args){
         ContaTerminal conta = new ContaTerminal();
-        Scanner input = new Scanner(System.in);
+        lerdadosUsuario("Por favor, digite o seu nome", String.class, conta::setNomeCliente);
+        // Requisitando número da agência e dígito verificador
+        String agNumero = lerdadosUsuario("Por favor, digite o número da agência", String.class);
+        String agDigitoVerificador = lerdadosUsuario("Por favor, digite o dígito verificador da agência", String.class);
+        conta.setAgencia(agNumero +"-"+agDigitoVerificador);
 
-        System.out.println("Por favor, digite o seu nome");
-        conta.setNomeCliente(input.nextLine());
+        lerdadosUsuario("Por favor, digite o número da conta", Integer.class, conta::setNumero);
+        lerdadosUsuario("Qual o valor do primeiro depósito?", Double.class, conta::depositar);
 
-        System.out.println("Por favor, digite o número da agência");
-        String agNumero = input.nextLine();
+        //Formatação e envio da saída para o usuário
+        String saida = "Olá %s, obrigado por criar uma conta em nosso banco, sua agência é %s, conta %d e seu saldo %.2f já está disponível para saque.";
+        String saidaFormatada = String.format(saida, conta.getNomeCliente(), conta.getAgencia(), conta.getNumero(), conta.getSaldo());
 
-        System.out.println("Por favor, digite o dígito verificador da agência");
-        String agDigitoVerificador = input.nextLine();
-        conta.setAgencia(agNumero+agNumero);
-
-
-        System.out.println("Por favor, digite o número da conta");
-        conta.setNumero(input.nextInt());
-        //nextline é necessário para evitar InputMismatchException
-        input.nextLine();
-
-        System.out.println("Qual o valor do primeiro depósito?");
-        Float vlrDeposito= input.nextFloat();
-        conta.depositar(vlrDeposito, conta);
-
-        String saida = "Olá %s, obrigado por criar uma conta em nosso banco, sua agência é %s, conta %,d e seu saldo %f já está disponível par asaque.";
-
-        String saidaFOrmatada = String.format(saida, conta.getNomeCliente(), conta.getAgencia(), conta.getNumero(), conta.getSaldo());
-        System.out.println(saidaFOrmatada);
+        System.out.println(saidaFormatada);
     }
 
-    public void depositar(Float valor, ContaTerminal conta){
-        if(conta.getSaldo() != 0){
-            conta.setSaldo(conta.getSaldo()+valor);
+    public void depositar(Double valor){
+        if (this.getSaldo() != null && this.getSaldo() != 0){
+            this.setSaldo(this.getSaldo()+valor);
         } else {
-            conta.setSaldo(valor);
+            this.setSaldo(valor);
         }
     }
 
+    public static <T> T lerdadosUsuario(String mensagem, Class<T> tipo) {
+        Scanner input = new Scanner(System.in);
+        System.out.println(mensagem);
+        while (true) {
+            try {
+                if (tipo == String.class) {
+                    return tipo.cast(input.nextLine());
+                } else if (tipo == Integer.class) {
+                    return tipo.cast(input.nextInt());
+                    // Consumir a nova linha pendente
+                } else if (tipo == Double.class) {
+                    input.useLocale(Locale.US);
+                    return tipo.cast(input.nextDouble());
+                }
+                break;
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada inválida. Por favor, tente novamente.");
+                input.next(); // Consumir a entrada inválida
+            } catch (Exception e) {
+                e.printStackTrace();
+                break;
+            }
+        }
+        return null; // Retorno padrão para evitar erro de compilação
+    }
+
+    public static <T> void lerdadosUsuario(String mensagem, Class<T> tipo, Consumer<T> setter) {
+        setter.accept(lerdadosUsuario(mensagem, tipo));
+    }
     public Integer getNumero() {
         return numero;
     }
@@ -71,11 +90,11 @@ public class ContaTerminal {
         this.nomeCliente = nomeCliente;
     }
 
-    public Float getSaldo() {
+    public Double getSaldo() {
         return saldo;
     }
 
-    public void setSaldo(Float saldo) {
+    public void setSaldo(Double saldo) {
         this.saldo = saldo;
     }
 }
